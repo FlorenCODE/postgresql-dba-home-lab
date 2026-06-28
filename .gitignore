@@ -1,0 +1,40 @@
+# Private evidence and archives
+evidence/
+*.zip
+*.tar.gz
+*.7z
+*.bak
+*.backup
+
+# Credentials and secrets
+*.env
+.env
+.env.*
+*password*
+*Password*
+*credential*
+*Credential*
+*secret*
+*Secret*
+*token*
+*Token*
+*.key
+*.pem
+*.ppk
+id_rsa
+id_rsa.pub
+
+# Database dumps and raw exports
+*.dump
+*.sql
+*.csv
+
+# System and tool logs
+*.log
+logs/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
