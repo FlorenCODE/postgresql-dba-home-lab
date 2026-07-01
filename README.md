@@ -1,4 +1,4 @@
-# PostgreSQL DBA Home Lab Portfolio, Only on Local Network so IP address exposure is not a security threat
+# PostgreSQL DBA Home Lab Portfolio, Only on Local Network so IP Address exposure is not a Security Threat
 
 ## Current Lab Status
 
