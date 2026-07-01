@@ -143,7 +143,7 @@ Credentials, passwords, private keys, raw evidence files, local IP details, comm
 - Practice indexing and query analysis.
 - Add replication later as an advanced lab milestone.
 
-
+## Current SQL Servers
 - db-primary  = main PostgreSQL write server
 - db-replica  = PostgreSQL read-only replica
 - db-ops      = automation, backups, cron jobs, monitoring, scripts, logs
