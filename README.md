@@ -144,6 +144,6 @@ Credentials, passwords, private keys, raw evidence files, local IP details, comm
 - Add replication later as an advanced lab milestone.
 
 
-db-primary  = main PostgreSQL write server
-db-replica  = PostgreSQL read-only replica
-db-ops      = automation, backups, cron jobs, monitoring, scripts, logs
+- db-primary  = main PostgreSQL write server
+- db-replica  = PostgreSQL read-only replica
+- db-ops      = automation, backups, cron jobs, monitoring, scripts, logs
