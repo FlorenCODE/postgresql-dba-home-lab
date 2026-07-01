@@ -1,4 +1,39 @@
-# PostgreSQL DBA Home Lab Portfolio, Only on Local Network so IP Address exposure is not a Security Threat
+# PostgreSQL DBA Home Lab Portfolio, Only on private Network so IP Address exposure is not a Security Threat
+
+
+This repository documents a public-safe, in-progress PostgreSQL DBA home lab built for hands-on database administration practice. The lab runs on a private local network and is not a production deployment.
+
+The goal of this project is to demonstrate practical DBA skills through a working PostgreSQL environment with primary/replica architecture, schema design, synthetic data, backup and restore validation, operations-server setup, and professional documentation.
+
+## Current Lab Status
+
+This PostgreSQL DBA home lab currently demonstrates:
+
+- A working PostgreSQL 18.4 primary database server.
+- A separate PostgreSQL read-only replica using asynchronous streaming replication.
+- A dedicated operations server, `db-ops`, for backups, cron jobs, monitoring checks, scripts, and logs.
+- A Student Understanding Verification Platform-compatible relational database model.
+- Synthetic seed data for instructors, students, courses, enrollments, assessment sessions, student responses, understanding reports, security roles, permissions, and audit events.
+- Verified primary-to-replica replication using a heartbeat table.
+- Manual custom-format PostgreSQL backup using `pg_dump`.
+- Restore validation using `pg_restore` into a separate restore-test database.
+- Screenshot and log evidence suitable for a DBA portfolio.
+
+## Lab Architecture
+
+```text
+Windows 11 Pro / Hyper-V Host
+│
+├── db-primary
+│   └── PostgreSQL primary write server
+│
+├── db-replica
+│   └── PostgreSQL read-only streaming replica
+│
+└── db-ops
+    └── Operations server for backups, cron jobs, monitoring checks, scripts, and logs
+
+
 
 ## Current Lab Status
 
