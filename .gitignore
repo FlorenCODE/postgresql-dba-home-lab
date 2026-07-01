@@ -38,3 +38,10 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+*.dump
+*.backup
+*.sql
+*.tar
+*.gz
+.env
+.pgpass
