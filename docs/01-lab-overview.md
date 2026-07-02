@@ -43,9 +43,6 @@ Public-safe architecture summary:
 - Created reporting views for lab queries.
 - Exported an ERD and selected public screenshots.
 - Started backup and recovery planning documentation.
-
-## Still In Progress
-
 - Add realistic sample data.
 - Perform formal backup and restore drills.
 - Expand reporting views and validation queries.
