@@ -26,11 +26,3 @@
 - Full backup/tool evidence
 - Connection strings with credentials
 
-## Needs Human Review Before Publishing
-
-- Open each screenshot and confirm it does not show private account names, private paths, IP addresses, credentials, or unrelated personal information.
-- Review LinkedIn text for tone and accuracy.
-- Confirm the project is still described as in progress.
-- Confirm no production claims were added.
-- Confirm no private source evidence was copied into this folder.
-- Confirm `.gitignore` is present before initializing or pushing a Git repository.
