@@ -1,408 +1,475 @@
-# PostgreSQL DBA Home Lab Portfolio
+# PostgreSQL DBA Home Lab
 
-This repository documents a public-safe, in-progress PostgreSQL DBA home lab built for hands-on database administration practice. The lab runs on a private local network and is not a production deployment.
+This repository documents a hands-on PostgreSQL database administration lab designed to build practical DBA, systems administration, monitoring, automation, backup, replication, and troubleshooting skills.
 
-The purpose of this project is to demonstrate practical DBA skills through a working PostgreSQL environment with primary/replica architecture, schema design, synthetic data, backup and restore validation, an operations server, and professional documentation.
+The lab is intentionally built as a realistic multi-system environment rather than a single local database. It separates database servers, an operations server, an AI-assisted workstation, monitoring tools, documentation, and automation scripts.
 
-## Project Status
+## Purpose
 
-**Current major checkpoint:** working PostgreSQL primary/replica environment with a dedicated operations server and a validated manual backup-and-restore workflow.
+The purpose of this lab is to practice the core responsibilities of a database administrator, including:
 
-The lab currently includes:
+- PostgreSQL installation and administration
+- Database connectivity testing
+- Streaming replication configuration and validation
+- Backup and restore planning
+- Health-check automation
+- Linux server administration
+- Bash scripting
+- SQL diagnostics
+- Monitoring with Prometheus and Grafana
+- GitHub-based documentation and portfolio development
+- AI-assisted DBA operations using a local AI workstation
 
-- PostgreSQL 18.4 primary server.
-- PostgreSQL 18.4 read-only streaming replica.
-- Dedicated `db-ops` operations server.
-- Student Understanding Verification Platform-compatible database model.
-- Synthetic seed data.
-- Streaming replication validation.
-- Manual backup with `pg_dump`.
-- Restore validation with `pg_restore`.
-- Portfolio evidence through screenshots, logs, SQL scripts, and documentation.
+This lab is also intended to support career development toward database administration, systems administration, cloud monitoring, and data infrastructure roles.
 
-## Lab Architecture
+## Current Lab Topology
+
+| System | Role | Current Purpose |
+|---|---|---|
+| HP Envy | Hyper-V host | Main lab host running Ubuntu Server VMs |
+| `db-primary` | PostgreSQL primary server | Main writable PostgreSQL database server |
+| `db-replica` | PostgreSQL replica server | Streaming replica / read-only validation server |
+| `db-ops` | Operations server | Automation, monitoring, health checks, reports, Prometheus, Grafana |
+| Acer Nitro V 15 | AI operations workstation | Odysseus, Ollama, Docker, VS Code, GitHub documentation, script review, AI-assisted troubleshooting |
+| GitHub | Source control | Stores documentation, scripts, lab evidence, and portfolio material |
+
+## Current Network Inventory
+
+| Host | IP Address | Purpose |
+|---|---|---|
+| `db-primary` | `10.0.0.129` | PostgreSQL primary |
+| `db-ops` | `10.0.0.128` | Automation and monitoring server |
+| `db-replica` | `10.0.0.153` | PostgreSQL streaming replica |
+
+## Current PostgreSQL Environment
+
+| Item | Current Value |
+|---|---|
+| PostgreSQL version | PostgreSQL 18.x |
+| Main database | `dba_lab` |
+| DBA lab user | `dbadmin` |
+| Primary server | `db-primary` |
+| Replica server | `db-replica` |
+| Operations server | `db-ops` |
+
+## Repository Structure
 
 ```text
-Windows 11 Pro / Hyper-V Host
-│
-├── db-primary
-│   └── PostgreSQL primary write server
-│
-├── db-replica
-│   └── PostgreSQL read-only streaming replica
-│
-└── db-ops
-    └── Operations server for backups, cron jobs, monitoring checks, scripts, and logs
+postgresql-dba-home-lab/
+  README.md
+  PUBLICATION_CHECKLIST.md
+
+  docs/
+    ai-operations-workstation.md
+    automation-plan.md
+    replication-troubleshooting.md
+
+  scripts/
+    health/
+      check_host_reachability.sh
+      check_db_connectivity.sh
+      check_replication.sh
+
+    reports/
+
+  sql/
+
+  screenshots/
 ```
 
-## Current SQL Servers
+## Current Documentation
 
-| Server | Role |
+| File | Purpose |
 |---|---|
-| `db-primary` | Main PostgreSQL write server |
-| `db-replica` | PostgreSQL read-only streaming replica |
-| `db-ops` | Operations server for backups, cron jobs, monitoring, scripts, and logs |
+| `docs/ai-operations-workstation.md` | Documents the Acer Nitro V role as the AI operations workstation |
+| `docs/automation-plan.md` | Defines the DBA lab automation and health-reporting plan |
+| `docs/replication-troubleshooting.md` | Documents a real replication issue, root cause, fix, and validation |
+| `PUBLICATION_CHECKLIST.md` | Tracks portfolio/publication readiness |
+| `linkedin-project-description.md` | Draft LinkedIn project description |
+| `linkedin-progress-post.md` | Draft LinkedIn progress update |
 
-## Core Database
+## AI Operations Workstation
 
-| Item | Value |
+The Acer Nitro V 15 is used as the AI operations workstation for this lab.
+
+Current Acer software stack:
+
+| Tool | Purpose |
 |---|---|
-| Database | `dba_lab` |
-| PostgreSQL version | PostgreSQL 18.4 |
-| Main administrative role | `dbadmin` |
-| Primary server role | Read/write |
-| Replica server role | Read-only standby |
-| Operations server role | Backup, restore testing, monitoring, scheduled jobs, and scripts |
+| Odysseus | AI-assisted coding and operations workspace |
+| Ollama | Local AI model server |
+| Docker Desktop | Runs local AI tooling and containers |
+| VS Code | Documentation and script editing |
+| Git | Source control |
+| GitHub | Remote repository and portfolio record |
+| PowerShell | Windows command-line work |
+| OpenSSH | Remote access to Linux lab servers |
 
-## Database Schemas
+Current local AI models:
 
-The lab database is organized into separate schemas to practice real database object organization.
-
-| Schema | Purpose |
+| Model | Purpose |
 |---|---|
-| `app` | Application tables for the student-understanding assessment model |
-| `audit` | Audit/event tracking |
-| `security` | Role-based access control practice |
-| `reporting` | Reporting views and review queries |
-| `lab_admin` | Lab administration and replication validation objects |
+| `qwen2.5-coder:14b` | Main local model for DBA lab reasoning, script review, and documentation |
+| `qwen2.5-coder:7b` | Fast fallback model |
 
-## Completed Milestones
+The Acer is not currently used as the PostgreSQL server, replica server, or operations server. Its role is to act as an AI-assisted control center for documentation, review, troubleshooting, and planning.
 
-### PostgreSQL Environment
+## Automation Architecture
 
-- Built a local PostgreSQL lab environment using virtualization.
-- Installed and validated PostgreSQL 18.4 on Ubuntu Server.
-- Created the `dba_lab` PostgreSQL database.
-- Created and used PostgreSQL administrative roles for lab work.
-- Connected to PostgreSQL using `psql`.
-- Connected to PostgreSQL using pgAdmin 4.
-- Practiced command-line administration from both Windows PowerShell and Ubuntu Server.
+The automation design separates the AI workstation from the scheduled operations server.
 
-### Database Design
+```text
+Acer Nitro V
+  ├── Odysseus
+  ├── Ollama
+  ├── Docker
+  ├── VS Code
+  ├── GitHub repository clone
+  └── AI-assisted documentation, review, and troubleshooting
 
-- Organized database objects into the following schemas:
-  - `app`
-  - `audit`
-  - `security`
-  - `reporting`
-  - `lab_admin`
-- Designed relational tables for a student-understanding assessment model.
-- Documented primary keys, foreign keys, unique constraints, check constraints, and indexes.
-- Created audit/event tracking tables.
-- Created security and RBAC practice tables.
-- Created reporting views for lab review queries.
-- Exported ERD and selected public-safe screenshots.
+db-ops
+  ├── cron jobs
+  ├── health-check scripts
+  ├── backup validation scripts
+  ├── replication validation scripts
+  ├── Prometheus
+  ├── Grafana
+  ├── report generation scripts
+  └── automated health report delivery
 
-### Application Data Model
+db-primary
+  ├── PostgreSQL primary database
+  ├── primary write workload
+  └── replication source
 
-The lab database supports a Student Understanding Verification Platform-style model.
+db-replica
+  ├── PostgreSQL replica database
+  ├── recovery mode validation
+  └── replication receiver
+```
 
-Current model areas include:
+## Completed Automation Scripts
 
-- Instructors
-- Students
-- Courses
-- Course enrollments
-- Assessment sessions
-- Student responses
-- Understanding reports
-- Audit events
-- Application roles
-- Application permissions
-- Role-permission mappings
-- User-role assignments
-- Reporting views
-- Replication heartbeat validation
+The lab currently has three working health-check scripts.
 
-### Seed Data and Validation
+### Host Reachability Check
 
-- Loaded synthetic instructors, students, courses, enrollments, assessment sessions, student responses, understanding reports, security roles, permissions, and audit events.
-- Validated seed data on the primary server.
-- Used SQL queries to verify table relationships and expected row counts.
-- Confirmed seeded data replicated successfully to the replica server.
-- Captured screenshot evidence for portfolio documentation.
+Script:
 
-### Streaming Replication
+```text
+scripts/health/check_host_reachability.sh
+```
 
-- Configured a separate PostgreSQL replica server for asynchronous streaming replication.
-- Verified that `db-primary` is writable.
-- Verified that `db-replica` is read-only.
-- Confirmed replication using a heartbeat table and replicated test rows.
-- Confirmed replica state using PostgreSQL recovery checks.
-- Verified that the replica reports `pg_is_in_recovery() = true`.
-- Documented the primary/replica checkpoint.
+Purpose:
 
-### Operations Server
+- Checks whether the core lab hosts are reachable over the network
+- Verifies basic network availability before deeper database checks
 
-- Built a dedicated `db-ops` Ubuntu Server VM.
-- Installed PostgreSQL client tools, including:
-  - `psql`
-  - `pg_dump`
-  - `pg_restore`
-- Installed supporting operations tools:
-  - `rsync`
-  - `curl`
-  - `wget`
-  - `git`
-  - `jq`
-  - `tree`
-  - `net-tools`
-  - `dnsutils`
-  - `netcat-openbsd`
-  - `cron`
-- Confirmed `db-ops` can reach both PostgreSQL servers over the network.
-- Confirmed `db-ops` can authenticate to both `db-primary` and `db-replica`.
-- Confirmed `cron` is enabled and running for future scheduled jobs.
+Checks:
 
-### Backup and Restore Validation
+- `db-primary`
+- `db-ops`
+- `db-replica`
 
-- Created a backup folder structure under `/var/backups/dba-lab/`.
-- Created a log folder under `/var/log/dba-lab/`.
-- Performed a manual custom-format backup from `db-primary` using `pg_dump`.
-- Verified the backup file using `pg_restore -l`.
-- Created a timestamped restore-test database.
-- Restored the backup into the restore-test database using `pg_restore`.
-- Verified restored objects across the `app`, `audit`, `lab_admin`, `reporting`, and `security` schemas.
-- Saved restore-test evidence in a timestamped log file.
-- Confirmed that the backup was readable, restorable, and contained expected schema objects.
+Current result:
 
-## Restore Validation Summary
+```text
+Overall status: OK
+```
 
-A custom-format PostgreSQL backup was created from `db-primary`, restored into a separate restore-test database, and validated by querying restored schema objects.
+### PostgreSQL Connectivity Check
 
-Restore validation confirmed objects in the following schemas:
+Script:
 
-- `app`
-- `audit`
-- `lab_admin`
-- `reporting`
-- `security`
+```text
+scripts/health/check_db_connectivity.sh
+```
 
-This demonstrates a core DBA principle:
+Purpose:
 
-> A backup is not trusted until it has been successfully restored and validated.
+- Checks whether PostgreSQL is accepting connections on the primary and replica
+- Uses `pg_isready` to confirm PostgreSQL is listening on port `5432`
 
-## Key Documentation
+Checks:
 
-- [Streaming Replication Checkpoint](docs/05_replication_high_availability/streaming_replication_checkpoint.md)
-- [SUVP Schema and Seed Data Checkpoint](docs/02_database_design/suvp_schema_seed_data_checkpoint.md)
-- [Lab Overview](docs/01-lab-overview.md)
-- [Environment and Tools](docs/02-environment-and-tools.md)
-- [PostgreSQL Installation and Configuration](docs/03-postgresql-installation-and-configuration.md)
-- [Database Schema Design](docs/04-database-schema-design.md)
-- [Backup and Recovery Evidence](docs/05-backup-and-recovery-evidence.md)
-- [Evidence Collection Method](docs/06-evidence-collection-method.md)
-- [Lessons Learned](docs/07-lessons-learned.md)
-- [Next Steps](docs/08-next-steps.md)
+- `db-primary:5432`
+- `db-replica:5432`
 
-## SQL Scripts
+Current result:
 
-- [SUVP Schema Seed Data Scripts](sql/05_suvp_schema_seed_data/)
+```text
+Overall status: OK
+```
 
-Planned SQL script areas include:
+### Replication Health Check
 
-- Schema creation scripts
-- Seed data scripts
-- Validation queries
-- Reporting view definitions
-- Backup and restore helper scripts
-- Monitoring and health-check queries
-- Role and permission management scripts
-- Replication validation queries
+Script:
 
-## Screenshot Evidence
+```text
+scripts/health/check_replication.sh
+```
 
-- [Replication Screenshots](screenshots/replication/)
-- [SUVP Schema and Seed Data Screenshots](screenshots/suvp_schema_seed_data/)
-- [Selected Screenshots](screenshots/)
+Purpose:
 
-Selected public-safe screenshot examples:
+- Validates PostgreSQL streaming replication health
+- Confirms the primary and replica roles
+- Confirms active streaming
+- Performs a live heartbeat insert on `db-primary`
+- Confirms the heartbeat row appears on `db-replica`
+- Checks replay delay
 
-- [Lab schemas](screenshots/04_lab_schemas.png)
-- [Application tables](screenshots/05_app_schema_tables.png)
-- [Application column summary](screenshots/06b_app_table_column_summary.png)
-- [Constraints and keys](screenshots/07_constraints_primary_foreign_keys.png)
-- [Foreign key relationships](screenshots/08_foreign_key_relationships.png)
-- [Indexes](screenshots/09_indexes.png)
-- [Audit schema table](screenshots/10_audit_schema_tables.png)
-- [Security schema tables](screenshots/12_security_schema_tables.png)
-- [Reporting views](screenshots/13_reporting_schema_views.png)
-- [Database object summary](screenshots/15_database_object_summary.png)
-- [ERD screenshot](screenshots/17_erd_schema_diagram_app_schema_screenshot.png)
-- [ERD zoomed-out screenshot](screenshots/17_erd_schema_diagram_app_schema_screenshot-zoomed-out.png)
+Checks:
 
-## Skills Demonstrated
+- `db-primary` is not in recovery mode
+- `db-replica` is in recovery mode
+- `db-primary` sees at least one streaming replica connection
+- `db-replica` WAL receiver is streaming
+- heartbeat row replicates from primary to replica
+- replay delay is acceptable
 
-This lab demonstrates practical database administration skills, including:
+Current result:
 
-- PostgreSQL installation and service validation
-- Linux server administration basics
-- SSH-based server access
-- PostgreSQL role and database management
-- Schema design and database object organization
-- Primary key, foreign key, constraint, and index documentation
-- Primary/replica PostgreSQL architecture
+```text
+Overall status: OK
+```
+
+## Clean Health Logs
+
+Clean logs have been saved on `db-ops` under:
+
+```text
+logs/health/
+```
+
+Current saved logs:
+
+```text
+check_host_reachability_2026-07-08.log
+check_db_connectivity_2026-07-08.log
+check_replication_2026-07-08.log
+```
+
+These logs are currently generated on `db-ops`. Routine logs are not necessarily committed to GitHub because operational logs can grow over time and may include environment-specific details.
+
+## Replication Troubleshooting Incident
+
+During automation testing, the first two checks passed:
+
+```text
+Host reachability: OK
+PostgreSQL connectivity: OK
+```
+
+However, deeper replication checks showed that `db-replica` was in recovery mode but not actively streaming.
+
+Symptoms:
+
+- `pg_is_in_recovery()` returned `t` on `db-replica`
+- `pg_stat_replication` on `db-primary` initially returned no active replica rows
+- `pg_stat_wal_receiver` on `db-replica` initially returned no active stream
+- replay delay showed the replica was stale
+
+Root cause:
+
+```text
+db-replica had an outdated /etc/hosts entry:
+10.0.0.119 db-primary
+```
+
+Correct mapping:
+
+```text
+10.0.0.129 db-primary
+```
+
+Fix:
+
+- Edited `/etc/hosts` on `db-replica`
+- Corrected `db-primary` to resolve to `10.0.0.129`
+- Restarted PostgreSQL on `db-replica`
+- Confirmed WAL receiver resumed streaming
+- Confirmed `db-primary` saw `db-replica` as streaming
+- Inserted a heartbeat row on `db-primary`
+- Confirmed the row appeared on `db-replica`
+
+This incident is documented in:
+
+```text
+docs/replication-troubleshooting.md
+```
+
+## Key DBA Concepts Practiced
+
+This lab currently demonstrates:
+
+- PostgreSQL service validation
+- PostgreSQL client connectivity testing
+- Primary/replica architecture
 - Streaming replication validation
-- Read-only standby verification
-- SQL seed data design
-- Relational joins and validation queries
-- Audit/event data modeling
-- Security and RBAC data modeling
-- PostgreSQL metadata queries
-- Backup creation with `pg_dump`
-- Backup inspection with `pg_restore -l`
-- Restore testing with `pg_restore`
-- Operations server setup
-- Cron readiness for scheduled jobs
-- Evidence collection for a technical portfolio
-- Git and GitHub documentation workflow
-- Public-safe technical documentation
+- WAL receiver troubleshooting
+- Replay delay analysis
+- Live replication heartbeat testing
+- Linux hostname resolution troubleshooting
+- `/etc/hosts` management
+- PostgreSQL log review
+- Bash health-check scripting
+- Git and GitHub workflow
+- AI-assisted documentation and script review
 
-## Tools Used
+## Common Commands
 
-- PostgreSQL 18.4
-- Ubuntu Server
-- Hyper-V
-- pgAdmin 4
-- Windows PowerShell
-- SSH
-- `psql`
-- `pg_dump`
-- `pg_restore`
-- `rsync`
-- `cron`
-- `jq`
-- `tree`
-- `netcat-openbsd`
-- Git and GitHub
-- PostgreSQL metadata queries
-- CSV exports
-- ERD and screenshots
+### SSH into `db-ops`
 
-## Repository Safety Notes
-
-This is a public-safe portfolio repository. Credentials, passwords, private keys, raw evidence files, sensitive configuration files, raw database backup archives, and private source evidence are intentionally excluded.
-
-The repository should include:
-
-- Documentation
-- Sanitized screenshots
-- Sanitized restore-test logs
-- SQL schema scripts
-- SQL validation queries
-- Backup and monitoring scripts that do not contain credentials
-- Public-safe portfolio explanations
-
-The repository should not include:
-
-- Raw `.dump` backup files
-- Raw production-style SQL exports containing data
-- `.env` files
-- `.pgpass` files
-- Passwords
-- API keys
-- Private keys
-- Unredacted sensitive logs
-- Raw database backup archives
-
-Recommended `.gitignore` patterns include:
-
-```gitignore
-# Database backup/export files
-*.dump
-*.backup
-*.tar
-*.gz
-
-# Sensitive environment/credential files
-.env
-.pgpass
-
-# Backup/export folders
-backups/
-backup/
-exports/
-dumps/
-restore-tests/
-
-# Raw SQL exports only
-*_backup.sql
-*_dump.sql
-*_export.sql
+```powershell
+ssh floren@10.0.0.128
 ```
 
-Clean SQL files used for schema design, migrations, and portfolio queries may be committed when they do not contain credentials or sensitive data.
+### SSH into `db-replica`
 
-## What Is In Progress
+```powershell
+ssh floren@10.0.0.153
+```
 
-The lab is currently moving from manual operations into repeatable operations automation.
+### Move into the repository on `db-ops`
 
-Current in-progress work includes:
+```bash
+cd ~/postgresql-dba-home-lab
+```
 
-- Converting manual backup commands into reusable scripts.
-- Creating scheduled backups with `cron`.
-- Creating backup success and failure logs.
-- Adding backup retention cleanup logic.
-- Documenting restore-test evidence in public-safe Markdown format.
-- Creating monitoring and health-check scripts for `db-primary` and `db-replica`.
-- Adding replication health checks from `db-ops`.
-- Improving role separation for backup, monitoring, read-only, and application users.
+### Pull latest repository changes on `db-ops`
 
-## Next Planned Lab Additions
+```bash
+git pull
+```
 
-Planned next steps include:
+### Run host reachability check
 
-- Create scheduled backups with `cron`.
-- Create backup success/failure logs.
-- Add backup retention cleanup logic.
-- Add restore-test documentation.
-- Practice PostgreSQL point-in-time recovery concepts.
-- Add monitoring queries and health checks.
-- Create scripts to check primary and replica availability.
-- Create scripts to check replication health and replica recovery state.
-- Add PostgreSQL log review notes.
-- Practice indexing and query analysis.
-- Practice role separation for backup, monitoring, read-only, and application users.
-- Add Prometheus, Grafana, and PostgreSQL exporter after the backup and health-check workflow is documented.
-- Practice failover and recovery documentation.
+```bash
+./scripts/health/check_host_reachability.sh
+```
 
-## Future Advanced Topics
+### Run PostgreSQL connectivity check
 
-Future expansion areas include:
+```bash
+./scripts/health/check_db_connectivity.sh
+```
 
-- Point-in-time recovery
-- WAL archiving
-- Backup retention policies
-- Monitoring dashboards
-- Prometheus
-- Grafana
-- PostgreSQL exporter
-- Linux node exporter
-- Failover practice
-- Recovery documentation
-- Read-only reporting users
-- Dedicated backup users
-- Dedicated monitoring users
-- Query performance analysis
-- Index tuning
-- Maintenance jobs
-- Windows Server administration practice
-- PowerShell automation
+### Run replication health check
 
-## LinkedIn-Ready Materials
+```bash
+./scripts/health/check_replication.sh
+```
 
-- [LinkedIn Project Description](linkedin-project-description.md)
-- [LinkedIn Progress Post](linkedin-progress-post.md)
+### Save a health-check log
 
-## Publication Support
+```bash
+./scripts/health/check_replication.sh | tee logs/health/check_replication_$(date +%F).log
+```
 
-- [Publication Checklist](PUBLICATION_CHECKLIST.md)
-- [Selected Screenshots](screenshots/)
+## Git Workflow
 
-## Professional Summary
+Current workflow:
 
-This project demonstrates a hands-on PostgreSQL DBA learning environment with practical work in database installation, schema design, replication, backup validation, restore testing, Linux operations, and documentation.
+```text
+Acer Nitro V = edit, commit, and push
+db-ops       = pull and run scripts
+```
 
-The current milestone shows that the lab has moved beyond simple database creation and now includes operational DBA practices: a dedicated operations server, validated connectivity to both primary and replica databases, a successful custom-format backup, and a confirmed restore into a separate restore-test database.
+This keeps `db-ops` simple and avoids needing GitHub write credentials on the operations server.
 
-This repository is actively maintained as a DBA learning and portfolio project.
+### Commit and push from the Acer
+
+Run from:
+
+```text
+C:\DBA-Lab\postgresql-dba-home-lab
+```
+
+Commands:
+
+```powershell
+git status
+git add README.md
+git commit -m "Update README with current DBA lab status"
+git push
+```
+
+### Pull updates on `db-ops`
+
+Run from:
+
+```text
+~/postgresql-dba-home-lab
+```
+
+Commands:
+
+```bash
+git pull
+```
+
+## Planned Next Steps
+
+Next planned automation work:
+
+1. Create `scripts/health/check_system_resources.sh`
+2. Check disk space on `db-ops`
+3. Check memory usage on `db-ops`
+4. Check CPU load and uptime
+5. Save system health logs
+6. Add backup validation script
+7. Add Prometheus health check
+8. Add Grafana health check
+9. Build a daily health report generator
+10. Configure email delivery for automated health reports
+11. Schedule the final report with `cron`
+
+## Planned Health Report Scope
+
+The final daily DBA lab health report should include:
+
+- `db-primary` reachable
+- `db-replica` reachable
+- `db-ops` reachable
+- PostgreSQL service running
+- PostgreSQL accepting connections
+- replica is in recovery mode
+- primary sees streaming replica
+- replica WAL receiver is streaming
+- heartbeat row replication test
+- replication replay delay
+- latest backup exists
+- backup file size looks valid
+- row count validation
+- Prometheus targets are up
+- Grafana service is running
+- Grafana is reachable
+- disk space
+- RAM usage
+- CPU/load snapshot
+- GitHub repository status
+
+## Learning Method
+
+This lab prioritizes learning over shortcuts.
+
+For each script, the learning process should include:
+
+1. Define the purpose of the check.
+2. Run the underlying command manually.
+3. Understand the expected output.
+4. Understand failure modes.
+5. Turn the command into a script.
+6. Add clear `OK`, `WARNING`, and `CRITICAL` statuses.
+7. Test the script manually.
+8. Save a log.
+9. Document the result.
+10. Commit the script and documentation to GitHub.
+
+## Portfolio Summary
+
+This PostgreSQL DBA home lab demonstrates a multi-server database administration environment with a primary PostgreSQL server, streaming replica, operations server, AI-assisted workstation, GitHub documentation, and working health-check automation.
+
+The lab includes real troubleshooting evidence, including detection and repair of a stale streaming replica caused by an outdated hostname-to-IP mapping. The issue was diagnosed through PostgreSQL system views, replay delay checks, WAL receiver status, service logs, and a live heartbeat replication test.
+
+The project is being developed as a practical DBA learning environment and portfolio project.
