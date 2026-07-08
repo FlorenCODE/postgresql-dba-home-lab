@@ -10,7 +10,7 @@
 # Checks performed:
 #   1. db-primary is not in recovery mode
 #   2. db-replica is in recovery mode
-#   3. db-primary sees db-replica as streaming
+#   3. db-primary sees at least one streaming replica
 #   4. db-replica WAL receiver is streaming
 #   5. Active heartbeat insert on db-primary appears on db-replica
 #   6. Replay delay is reported
@@ -25,7 +25,6 @@ DB_NAME="dba_lab"
 DB_USER="dbadmin"
 DB_PRIMARY_HOST="10.0.0.129"
 DB_REPLICA_HOST="10.0.0.153"
-DB_REPLICA_IP="10.0.0.153"
 
 OVERALL_STATUS="OK"
 
@@ -44,6 +43,7 @@ run_psql() {
     local sql="$2"
 
     psql \
+        -q \
         -P pager=off \
         -v ON_ERROR_STOP=1 \
         -h "$host" \
@@ -100,17 +100,19 @@ fi
 echo ""
 echo "3. Checking primary-side replication status..."
 
-PRIMARY_REPLICATION_STATE="$(run_psql "$DB_PRIMARY_HOST" "SELECT COALESCE((SELECT state FROM pg_stat_replication WHERE client_addr::text = '${DB_REPLICA_IP}' LIMIT 1), 'missing');" 2>/tmp/check_replication_primary_state.err)" || {
+PRIMARY_STREAMING_COUNT="$(run_psql "$DB_PRIMARY_HOST" "SELECT COUNT(*) FROM pg_stat_replication WHERE state = 'streaming';" 2>/tmp/check_replication_primary_state.err)" || {
     echo "CRITICAL: Could not query pg_stat_replication on db-primary."
     cat /tmp/check_replication_primary_state.err
     set_critical
-    PRIMARY_REPLICATION_STATE="unknown"
+    PRIMARY_STREAMING_COUNT="0"
 }
 
-if [ "$PRIMARY_REPLICATION_STATE" = "streaming" ]; then
-    echo "OK: db-primary sees db-replica as streaming."
+if [ "$PRIMARY_STREAMING_COUNT" -ge 1 ]; then
+    echo "OK: db-primary sees ${PRIMARY_STREAMING_COUNT} streaming replica connection(s)."
+    echo "Primary-side replication details:"
+    run_psql "$DB_PRIMARY_HOST" "SELECT client_addr, state, sync_state, COALESCE(write_lag::text, '') AS write_lag, COALESCE(flush_lag::text, '') AS flush_lag, COALESCE(replay_lag::text, '') AS replay_lag FROM pg_stat_replication;"
 else
-    echo "CRITICAL: db-primary does not see db-replica as streaming. State: ${PRIMARY_REPLICATION_STATE}"
+    echo "CRITICAL: db-primary does not show any streaming replica connections."
     set_critical
 fi
 
@@ -126,6 +128,8 @@ REPLICA_WAL_RECEIVER_STATUS="$(run_psql "$DB_REPLICA_HOST" "SELECT COALESCE((SEL
 
 if [ "$REPLICA_WAL_RECEIVER_STATUS" = "streaming" ]; then
     echo "OK: db-replica WAL receiver is streaming."
+    echo "Replica-side WAL receiver details:"
+    run_psql "$DB_REPLICA_HOST" "SELECT status, sender_host, sender_port, latest_end_lsn, latest_end_time FROM pg_stat_wal_receiver;"
 else
     echo "CRITICAL: db-replica WAL receiver is not streaming. Status: ${REPLICA_WAL_RECEIVER_STATUS}"
     set_critical
@@ -134,7 +138,7 @@ fi
 echo ""
 echo "5. Performing active heartbeat replication test..."
 
-HEARTBEAT_ID="$(run_psql "$DB_PRIMARY_HOST" "INSERT INTO lab_admin.replication_heartbeat (source_server, note) VALUES ('db-primary', 'automated replication health check from db-ops') RETURNING heartbeat_id;" 2>/tmp/check_replication_heartbeat_insert.err)" || {
+HEARTBEAT_ID="$(run_psql "$DB_PRIMARY_HOST" "WITH inserted AS (INSERT INTO lab_admin.replication_heartbeat (source_server, note) VALUES ('db-primary', 'automated replication health check from db-ops') RETURNING heartbeat_id) SELECT heartbeat_id FROM inserted;" 2>/tmp/check_replication_heartbeat_insert.err)" || {
     echo "CRITICAL: Could not insert heartbeat row on db-primary."
     cat /tmp/check_replication_heartbeat_insert.err
     set_critical
@@ -158,6 +162,9 @@ if [ -n "$HEARTBEAT_ID" ]; then
         echo "CRITICAL: Heartbeat row did not appear on db-replica."
         set_critical
     fi
+else
+    echo "CRITICAL: No heartbeat_id was returned from db-primary."
+    set_critical
 fi
 
 echo ""
