@@ -10,11 +10,9 @@ The goal was to prepare the `dba_lab` database for future integration with the S
 
 | Component | Value |
 |---|---|
-| Primary server | db-primary |
-| Primary IP | 10.0.0.119 |
-| Replica server | db-replica |
-| Replica IP | 10.0.0.153 |
-| Database | dba_lab |
+| Primary server | `db-primary` |
+| Replica server | `db-replica` |
+| Database | `dba_lab` |
 | Execution tool | pgAdmin |
 | SQL file location | `03_portfolio_workspace\sql\05_suvp_schema_seed_data` |
 | Evidence location | `03_portfolio_workspace\evidence\suvp_schema_seed_data` |
