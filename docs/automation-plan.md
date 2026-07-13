@@ -1,6 +1,17 @@
 # DBA Lab Automation Plan
 
-This document defines the automation plan for the PostgreSQL DBA home lab.
+This document remains the roadmap for the PostgreSQL DBA home lab automation work.
+
+## Current implementation status
+
+The core health-check automation is now implemented and validated. The four completed scripts are:
+
+- scripts/health/check_host_reachability.sh
+- scripts/health/check_db_connectivity.sh
+- scripts/health/check_replication.sh
+- scripts/health/check_system_resources.sh
+
+A more detailed implementation summary is available in [docs/automation-status.md](automation-status.md).
 
 The goal is to build a realistic database administration automation workflow that checks database availability, PostgreSQL service health, replication status, backup readiness, monitoring tools, system resources, and GitHub documentation status.
 
@@ -36,13 +47,13 @@ The current PostgreSQL DBA lab uses the following systems:
 | Acer Nitro V 15 | AI operations workstation | Odysseus, Ollama, Docker, GitHub documentation, script review, AI-assisted troubleshooting |
 | GitHub | Source control | Stores documentation, scripts, lab evidence, and portfolio material |
 
-Known lab IP addresses:
+Known lab hosts:
 
-| Host | IP Address |
+| Host | Role |
 |---|---|
-| `db-primary` | `10.0.0.129` |
-| `db-ops` | `10.0.0.128` |
-| `db-replica` | `10.0.0.153` |
+| `db-primary` | PostgreSQL primary server |
+| `db-ops` | Operations and validation server |
+| `db-replica` | PostgreSQL replica server |
 
 ## Automation Architecture
 
@@ -191,9 +202,9 @@ The automated DBA lab health report should check the following areas.
 Possible methods:
 
 ```bash
-ping -c 3 10.0.0.129
-ping -c 3 10.0.0.153
-ping -c 3 10.0.0.128
+ping -c 3 db-primary
+ping -c 3 db-replica
+ping -c 3 db-ops
 ```
 
 ### PostgreSQL Connectivity
@@ -207,14 +218,14 @@ ping -c 3 10.0.0.128
 Possible methods:
 
 ```bash
-pg_isready -h 10.0.0.129 -p 5432
-pg_isready -h 10.0.0.153 -p 5432
+pg_isready -h db-primary -p 5432
+pg_isready -h db-replica -p 5432
 ```
 
 Possible SQL connection check:
 
 ```bash
-psql -h 10.0.0.129 -U dbadmin -d dba_lab -c "SELECT current_database(), current_user, now();"
+psql -h db-primary -U dbadmin -d dba_lab -c "SELECT current_database(), current_user, now();"
 ```
 
 ### PostgreSQL Service Health
@@ -233,8 +244,8 @@ systemctl is-active postgresql
 Possible method when checking remotely through SSH:
 
 ```bash
-ssh floren@10.0.0.129 "systemctl is-active postgresql"
-ssh floren@10.0.0.153 "systemctl is-active postgresql"
+ssh floren@db-primary "systemctl is-active postgresql"
+ssh floren@db-replica "systemctl is-active postgresql"
 ```
 
 ### Replication Health

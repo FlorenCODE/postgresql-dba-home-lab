@@ -8,18 +8,18 @@ During automation testing, the lab health checks showed that the core systems we
 
 The replica server was still in recovery mode, but it was not actively streaming from the primary server.
 
-The root cause was an outdated hostname mapping on `db-replica`. The hostname `db-primary` still resolved to the old primary IP address, `10.0.0.119`, instead of the current primary IP address, `10.0.0.129`.
+The root cause was an outdated hostname mapping on `db-replica`. The hostname `db-primary` still resolved to the previous primary host mapping instead of the current primary host mapping.
 
 After correcting the hostname mapping, restarting PostgreSQL on `db-replica`, and validating with PostgreSQL replication views and a live heartbeat insert, streaming replication was confirmed working again.
 
 ## Systems Involved
 
-| System | Role | IP Address |
+| System | Role | Notes |
 |---|---|---|
-| `db-primary` | PostgreSQL primary server | `10.0.0.129` |
-| `db-replica` | PostgreSQL streaming replica | `10.0.0.153` |
-| `db-ops` | Operations and automation server | `10.0.0.128` |
-| Acer Nitro V | AI operations workstation | Local workstation |
+| `db-primary` | PostgreSQL primary server | Primary host in the lab architecture |
+| `db-replica` | PostgreSQL streaming replica | Standby host for replication validation |
+| `db-ops` | Operations and automation server | Validation and automation host |
+| Acer Nitro V | AI operations workstation | Local workstation for review and documentation |
 
 ## Initial Health Check Results
 
@@ -140,21 +140,11 @@ The PostgreSQL log on `db-replica` showed repeated streaming receiver connection
 
 ```text
 streaming replication receiver could not connect to the primary server:
-connection to server at "db-primary" (10.0.0.119), port 5432 failed:
+connection to server at "db-primary" failed:
 No route to host
 ```
 
-This showed that `db-replica` was trying to connect to the old primary IP address:
-
-```text
-10.0.0.119
-```
-
-The correct current IP address for `db-primary` is:
-
-```text
-10.0.0.129
-```
+This showed that `db-replica` was trying to connect to the old primary host mapping rather than the current primary host mapping.
 
 ## Root Cause
 
@@ -163,13 +153,13 @@ The root cause was an outdated `/etc/hosts` entry on `db-replica`.
 Old incorrect mapping:
 
 ```text
-10.0.0.119 db-primary
+old-primary-host db-primary
 ```
 
 Correct mapping:
 
 ```text
-10.0.0.129 db-primary
+current-primary-host db-primary
 ```
 
 PostgreSQL replication was configured to connect to:
@@ -187,7 +177,7 @@ On `db-replica`, the `/etc/hosts` file was edited.
 The old mapping was replaced with:
 
 ```text
-10.0.0.129 db-primary
+current-primary-host db-primary
 ```
 
 After saving the file, hostname resolution was confirmed:
@@ -199,7 +189,7 @@ getent hosts db-primary
 Expected result:
 
 ```text
-10.0.0.129 db-primary
+current-primary-host db-primary
 ```
 
 PostgreSQL reachability through the hostname was then confirmed:
@@ -249,7 +239,7 @@ Result:
 ```text
 client_addr | state     | sync_state
 ------------+-----------+------------
-10.0.0.153  | streaming | async
+replica-host | streaming | async
 ```
 
 ## Live Heartbeat Validation
@@ -345,7 +335,7 @@ OK: db-replica is in recovery mode.
 3. Checking primary-side replication status...
 OK: db-primary sees 1 streaming replica connection(s).
 Primary-side replication details:
-10.0.0.153|streaming|async|||
+replica-host|streaming|async|||
 
 4. Checking replica-side WAL receiver status...
 OK: db-replica WAL receiver is streaming.
@@ -370,7 +360,7 @@ logs/health/check_replication_2026-07-08.log
 
 ## Current Working Health Scripts
 
-The lab currently has three working health-check scripts:
+The lab currently has four working health-check scripts:
 
 ```text
 scripts/health/check_host_reachability.sh

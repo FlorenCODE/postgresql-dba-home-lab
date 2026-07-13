@@ -8,10 +8,10 @@ The goal of this milestone is to demonstrate that the lab can support a primary/
 
 ## Lab Architecture
 
-| Component | Role | Platform | IP Address |
-|---|---|---|---|
-| db-primary | PostgreSQL primary / writable server | Ubuntu Server VM on Hyper-V | 10.0.0.119 |
-| db-replica | PostgreSQL standby / read-only replica | Bare-metal Ubuntu Server desktop | 10.0.0.153 |
+| Component | Role | Platform |
+|---|---|---|
+| `db-primary` | PostgreSQL primary / writable server | Ubuntu Server VM on Hyper-V |
+| `db-replica` | PostgreSQL standby / read-only replica | Bare-metal Ubuntu Server desktop |
 
 ## Database
 
@@ -34,10 +34,10 @@ SELECT pg_is_in_recovery();
 
 ### Server Roles
 
-| Server | IP Address | Role | Validation Result |
-|---|---:|---|---|
-| db-primary | 10.0.0.119 | Writable PostgreSQL primary | `pg_is_in_recovery() = false` |
-| db-replica | 10.0.0.153 | Read-only PostgreSQL standby replica | `pg_is_in_recovery() = true` |
+| Server | Role | Validation Result |
+|---|---|---|
+| `db-primary` | Writable PostgreSQL primary | `pg_is_in_recovery() = false` |
+| `db-replica` | Read-only PostgreSQL standby replica | `pg_is_in_recovery() = true` |
 
 ### Streaming Replication Status
 
