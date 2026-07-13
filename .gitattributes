@@ -1,0 +1,2 @@
+# Keep Bash scripts compatible with Linux systems.
+*.sh text eol=lf
